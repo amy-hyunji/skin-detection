@@ -19,34 +19,34 @@ N_CLASSES = 20
 
 def main():
 
-    flags = tf.app.flags
-    FLAGS = flags.FLAGS
-    flags.DEFINE_string("data_dir", "../Dataset", "directory of data")
-    flags.DEFINE_string("save_dir", "../segmentation", "directory to save")
-	 flags.DEGINE_string("checkpoint_dir", "checkpoint/JPPNet-s2", "directory of checkpoint")
-    flags.DEFINE_integer("steps", 15000, "number of images")
-	 flags.DEFINE_integer("width", 256, "width size of image")
-	 flags.DEFINE_integer("height", 256, "height size of image")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", default = "../Dataset", help = "directory of data")
+    parser.add_argument("--save_dir", default = "../segmentation", help = "directory of data")
+    parser.add_argument("--checkpoint_dir", default = "./checkpoint/JPPNet-s2/", help = "directory of checkpoint")
+    parser.add_argument("--steps", default = 15000, help = "number of images")
+    parser.add_argument("--width", default = 256, help = "width size of image")
+    parser.add_argument("--height", default = 256, help = "height size of image")
+    args = parser.parse_args()
 
     """Create the model and start the evaluation process."""
     # Create queue coordinator.
     coord = tf.train.Coordinator()
-    h = FLAGS.height
-	 w = FLAGS.width
+    h = args.height
+    w = args.width
 
     """Create txt file of dataset list"""
-	 image_list = os.listdir(FLAGS.data_dir)
-    data_txt_dir = "./list/{}.txt".format(FLAGS.data_dir.split("/")[-1])
-	 if os.path.exists(data_txt_dir):
-		 data_txt_dir = data_txt_dir.split(".")[0]+"_"+".txt"
+    image_list = os.listdir(args.data_dir)
+    data_txt_dir = "./list/{}.txt".format(args.data_dir.split("/")[-1])
+    if os.path.exists(data_txt_dir):
+       data_txt_dir = data_txt_dir.split(".")[0]+"_"+".txt"
     print("text file name: {}".format(data_txt_dir))
-	 f = open(data_txt_dir, "w")
-	 for elem in image_list:
-        f.write("{}\n".format(os.path.join(FLAGS.data_dir, elem)))
+    f = open(data_txt_dir, "w")
+    for elem in image_list:
+        f.write("{}\n".format(os.path.join(args.data_dir, elem)))
     f.close()
 
     with tf.name_scope("create_inputs"):
-        reader = ImageReader(FLAGS.data_dir, data_txt_dir, None, False, False, coord)
+        reader = ImageReader(args.data_dir, data_txt_dir, None, False, False, coord)
         image = reader.image
         image_rev = tf.reverse(image, tf.stack([1]))
         image_list = reader.image_list
@@ -144,8 +144,8 @@ def main():
     
     # Load weights.
     loader = tf.train.Saver(var_list=restore_var)
-    if FLAGS.checkpoint_dir is not None:
-        if load(loader, sess, FLAGS.checkpoint_dir):
+    if args.checkpoint_dir is not None:
+        if load(loader, sess, args.checkpoint_dir):
             print(" [*] Load SUCCESS")
         else:
             print(" [!] Load failed...")
@@ -154,7 +154,7 @@ def main():
     threads = tf.train.start_queue_runners(coord=coord, sess=sess)
 
     # Iterate over training steps.
-    for step in range(FLAGS.steps):
+    for step in range(args.steps):
         parsing_ = sess.run(pred_all)
         if step % 1 == 0:
             print('step {:d}'.format(step))
@@ -166,8 +166,8 @@ def main():
         msk = decode_labels(parsing_, num_classes=N_CLASSES)
         parsing_im_1 = Image.fromarray(msk[0])
 
-        parsing_im_1.save('{}/{}.png'.format(FLAGS.save_dir, name))
-        cv2.imwrite('{}/{}.png'.format(FLAGS.save_dir, name),parsing_[0,:,:,0])
+        parsing_im_1.save('{}/{}.png'.format(args.save_dir, name))
+        cv2.imwrite('{}/{}.png'.format(args.save_dir, name),parsing_[0,:,:,0])
 
 if __name__ == "__main__":
 	os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3"
