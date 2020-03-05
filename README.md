@@ -1,7 +1,13 @@
 # skin-detection
 change the color of skin by other image or specific color
 
+## How it works
+1. get the dominant color of the target image face
+2. get the dominant color of the source image face
+3. get the min, max of RGB of dataset and by the minmax value
+4. try to equalize the distribution of target and source
 
+## How to use
 usage: main.py [-h] [--which WHICH] [--src SRC] [--tar TAR] [--srcseg SRCSEG]
                [--tarseg TARSEG] [--save SAVE] [--mode MODE]
 
